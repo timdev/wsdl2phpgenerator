@@ -74,9 +74,9 @@ class OutputManager
     if ($this->config->getOneFile())
     {
       if (!is_dir($this->config->getOutputDir()))
-	$this->file = new PhpFile(basename($this->config->getOutputDir()));
+        $this->file = new PhpFile(basename($this->config->getOutputDir()));
       else
-      $this->file = new PhpFile($service->getIdentifier());
+        $this->file = new PhpFile($service->getIdentifier());
       $this->addNamespace();
       $this->addClassToFile($service);
       foreach ($types as $type)
@@ -85,7 +85,7 @@ class OutputManager
       }
 
       if (!is_dir($this->config->getOutputDir()))
-	$this->file->save(dirname($this->config->getOutputDir()));
+        $this->file->save(dirname($this->config->getOutputDir()));
       else
       $this->file->save($this->dir);
     }

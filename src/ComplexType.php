@@ -46,7 +46,12 @@ class ComplexType extends Type
    * @throws Exception if the class is already generated(not null)
    */
   protected function generateClass()
-  {
+  { 
+    /**
+     * @var DocumentationManager
+     */
+    $dm = Generator::getInstance()->getDocumentationManager();
+    
     if ($this->class != null)
     {
       throw new Exception("The class has already been generated");
@@ -54,14 +59,17 @@ class ComplexType extends Type
 
     $config = Generator::getInstance()->getConfig();
 
-    $class = new PhpClass($this->phpIdentifier, $config->getClassExists());
+    $class = new PhpClass($this->phpIdentifier, $config->getClassExists(),'',new PhpDocComment($this->documentation));
 
     $constructorComment = new PhpDocComment();
     $constructorComment->setAccess(PhpDocElementFactory::getPublicAccess());
     $constructorSource = '';
     $constructorParameters = '';
-
+    
     // Add member variables
+    
+    $dox = $dm->getComplexTypeDescriptions($this->identifier);
+    
     foreach ($this->members as $member)
     {
       $type = '';
@@ -76,14 +84,17 @@ class ComplexType extends Type
       }
 
       $name = Validator::validateNamingConvention($member->getName());
-      $comment = new PhpDocComment();
+      
+      $comment = new PhpDocComment($dox[$member->getName()]);
       $comment->setVar(PhpDocElementFactory::getVar($type, $name, ''));
       $comment->setAccess(PhpDocElementFactory::getPublicAccess());
       $var = new PhpVariable('public', $name, '', $comment);
       $class->addVariable($var);
 
       $constructorSource .= '  $this->'.$name.' = $'.$name.';'.PHP_EOL;
-      $constructorComment->addParam(PhpDocElementFactory::getParam($type, $name, ''));
+      $varDocs = $dm->getComplexTypeDescriptions($this->getIdentifier());
+     
+      $constructorComment->addParam(PhpDocElementFactory::getParam($type, $name, $varDocs[$name]));
       $constructorComment->setAccess(PhpDocElementFactory::getPublicAccess());
       $constructorParameters .= ', $'.$name;
     }

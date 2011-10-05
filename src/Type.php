@@ -46,7 +46,12 @@ abstract class Type
    * @var string The datatype the simple type is of. This not used by complex types
    */
   protected $datatype;
-
+  
+  /**
+   * @var string Any extracted documentation for this type.
+   */
+  protected $documentation;
+  
   /**
    * The minimum construction
    *
@@ -125,6 +130,10 @@ abstract class Type
   public function getPhpIdentifier()
   {
     return $this->phpIdentifier;
+  }
+  
+  public function setDocumentation($dox){
+    $this->documentation = $dox;
   }
 }
 

@@ -96,6 +96,9 @@ class Generator
     self::$instance = $this;
   }
 
+  public function getDocumentationManager(){
+    return $this->documentation;
+  }
   /**
    * Generates php source code from a wsdl file
    *
@@ -110,12 +113,16 @@ class Generator
     $this->log(_('Starting generation'));
 
     $wsdl = $this->config->getInputFile();
-    if (is_array($wsdl))
-      foreach($wsdl as $ws)
-	$this->load($ws);
-    else
-      $this->load($wsdl);
-
+    
+      
+    if (is_array($wsdl)){
+      foreach($wsdl as $ws){        
+        $this->load($ws);
+      }
+    }else{
+      $this->load($wsdl);      
+    }
+    
     $this->savePhp();
 
     $this->log(_('Generation complete'));
@@ -140,7 +147,7 @@ class Generator
     $this->dom = DOMDocument::load($wsdl);
 
     $this->documentation->loadDocumentation($this->dom);
-
+   
     $this->loadTypes();
     $this->loadService();
   }
@@ -156,7 +163,11 @@ class Generator
 
     $this->log(_('Starting to load service ').$name);
 
-    $this->service = new Service($name, $this->types, $this->documentation->getServiceDescription());
+    $config = $this->getConfig();
+    
+    $ns = $config->getNamespaceName();
+    
+    $this->service = new Service($name, $this->types, $this->documentation->getServiceDescription(), $ns);
 
     $functions = $this->client->__getFunctions();
     foreach($functions as $function)
@@ -198,6 +209,7 @@ class Generator
     $this->log(_('Loading types'));
 
     $types = $this->client->__getTypes();
+   
 
     foreach($types as $typeStr)
     {
@@ -211,13 +223,33 @@ class Generator
         // skip arrays
         continue;
       }
-
+      
+      // used below to look for documentation string.
+      $documentation = null;
+      $dxp = new \DOMXPath($this->dom);
+      $dxp->registerNamespace('xs','http://www.w3.org/2001/XMLSchema');
+     
       $type = null;
       $numParts = count($parts);
+      
       // ComplexType
       if ($numParts > 1)
       {
+     
+        //look for dox.
+        $foo = $dxp->query("//xs:complexType[@name='$className']/xs:annotation/xs:documentation");
+        if ($foo->length >= 1) 
+        $documentation = $foo->item(0)->nodeValue;
+        
+#        echo str_pad($className,40) . ': ' . $documentation ."\n\n";
+
         $type = new ComplexType($className);
+        
+        #var_dump($this->documentation);
+        #var_dump($type->getPhpIdentifier());
+        #die('BORK');
+#        $type->setDocumentation($documentation->getComplexTypeDescriptions($type->getName()));
+        $type->setDocumentation($documentation);
         $this->log(_('Loading type ').$type->getPhpIdentifier());
 
         for($i = 1; $i < $numParts - 1; $i++)

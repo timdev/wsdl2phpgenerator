@@ -64,11 +64,12 @@ class Service
    * @param array $types The types the service knows about
    * @param string $description The description of the service
    */
-  function __construct($identifier, array $types, $description)
+  function __construct($identifier, array $types, $description, $namespace=null)
   {
     $this->identifier = $identifier;
     $this->types = $types;
     $this->description = $description;
+    $this->namespace = $namespace;
   }
 
   /**
@@ -107,7 +108,7 @@ class Service
 
     // Create the class object
     $comment = new PhpDocComment($this->description);
-    $this->class = new PhpClass($name, $config->getClassExists(), 'SoapClient', $comment);
+    $this->class = new PhpClass($name, $config->getClassExists(), '\\SoapClient', $comment);
 
     // Create the constructor
     $comment = new PhpDocComment();
@@ -141,7 +142,11 @@ class Service
     {
       if($type instanceof ComplexType)
       {
-        $init .= "  '".$type->getIdentifier()."' => '".$type->getPhpIdentifier()."',".PHP_EOL;
+        if (empty($this->namespace)){
+          $init .= "  '".$type->getIdentifier()."' => '".$type->getPhpIdentifier()."',".PHP_EOL;
+        }else{
+          $init .= "  '".$type->getIdentifier()."' => '\\{$this->namespace}\\".$type->getPhpIdentifier()."',".PHP_EOL;
+        }
       }
     }
     $init = substr($init, 0, strrpos($init, ','));
